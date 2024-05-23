@@ -19,5 +19,7 @@ int main(int argc, char *argv[])
    vector<ObjectParameters> objects = j->getObjects();
    string physicsList = j->getPhysicsList();
 
+   j->displayGunCommands();
+
     return 0;
 }

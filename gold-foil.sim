@@ -40,6 +40,25 @@
         }
     ],
     "meshes": [
+        {
+            "binsx": 1,
+            "binsy": 1,
+            "binsz": 500,
+            "dim-0": 10,
+            "dim-1": 10,
+            "dim-2": 500,
+            "mesh_id": 4,
+            "mesh_name": "Box-Mesh-004",
+            "mesh_type": "Box",
+            "posx": 0,
+            "posy": 0,
+            "posz": 0,
+            "rotx": 0,
+            "roty": 0,
+            "rotz": 0,
+            "scoring_filter": "",
+            "scoring_qty": "energyDeposit"
+        }
     ],
     "objects": [
         {

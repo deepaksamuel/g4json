@@ -8,7 +8,7 @@ using namespace std;
 vector<string> gunKeys = {
     "dimX", "dimY", "dimZ", "gpsshapePlane", "ionA", "ionZ", "nevents",
     "particleSource", "particleType", "posX", "posY", "posZ", "showevents",
-    "sourceShape", "angularDist", "dirx", "diry", "dirz", "phi_min", "phi_max",
+    "sourceShape", "angularDist", "dirx", "diry", "dirz", "phi_min", "phi_max", "sigma",
     "theta_min", "theta_max", "emax", "emin", "espectParam1", "espectParam2",
     "espectParam3", "espectType", "polx", "poly", "polz"};
 
@@ -41,6 +41,7 @@ struct GunParameters
     double dirz;
     double phi_min;
     double phi_max;
+    double sigma;
     double theta_min;
     double theta_max;
     double emax;
@@ -135,7 +136,6 @@ public:
         cout << json_data["misc"][0]["outputFile"].dump(4) << endl;
     }
 
-    
     void displayGunData()
     {
         cout << "Printing gun data:" << endl;
@@ -159,6 +159,7 @@ public:
         std::cout << std::left << std::setw(15) << "dirz:" << gun.dirz << std::endl;
         std::cout << std::left << std::setw(15) << "phi_min:" << gun.phi_min << std::endl;
         std::cout << std::left << std::setw(15) << "phi_max:" << gun.phi_max << std::endl;
+        std::cout << std::left << std::setw(15) << "sigma:" << gun.sigma << std::endl;
         std::cout << std::left << std::setw(15) << "theta_min:" << gun.theta_min << std::endl;
         std::cout << std::left << std::setw(15) << "theta_max:" << gun.theta_max << std::endl;
         std::cout << std::left << std::setw(15) << "emax:" << gun.emax << std::endl;
@@ -209,12 +210,134 @@ public:
     {
         cout << getOutputFile() << endl;
     }
+    void displayGunCommands()
+    {
+        vector<string> gunCommands = getGunCommands();
+
+        for (auto it = gunCommands.begin(); it != gunCommands.end(); it++)
+            cout << *it << endl;
+    }
+
+    vector<string> getGunCommands()
+    {
+        vector<string> commands;
+
+        if (gun.particleSource == true)
+        {
+            commands.push_back("/gps/particle " + gun.particleType);
+        }
+        else
+        { // ion source
+            commands.push_back("/gps/particle ion");
+            commands.push_back("/gps/ion " + to_string(gun.ionZ) + " " + to_string(gun.ionA));
+        }
+        if (gun.sourceShape == "Point")
+        {
+            commands.push_back("/gps/pos/type Point");
+        }
+        if ((gun.sourceShape == "Rectangle") || (gun.sourceShape == "Circle") || (gun.sourceShape == "Elliptical"))
+        {
+            commands.push_back("/gps/pos/type Plane");
+            commands.push_back(("/gps/pos/shape " + gun.sourceShape));
+        }
+        if ((gun.sourceShape == "Cube") || (gun.sourceShape == "Cylinder") || (gun.sourceShape == "Sphere"))
+        {
+            commands.push_back("/gps/pos/type Volume");
+            if (gun.sourceShape == "Cube")
+                commands.push_back(("/gps/pos/shape Para"));
+            else
+                commands.push_back(("/gps/pos/shape " + gun.sourceShape));
+        }
+        if (gun.sourceShape.find("Beam") == true)
+        {
+            commands.push_back("/gps/pos/type Beam");
+        }
+
+        if ((gun.sourceShape == "Rectangle") || (gun.sourceShape == "Elliptical"))
+        {
+            commands.push_back("/gps/pos/halfx " + std::to_string(gun.dimX) + " mm");
+            commands.push_back("/gps/pos/halfy " + std::to_string(gun.dimY) + " mm");
+        }
+        if ((gun.sourceShape == "Circle") || (gun.sourceShape == "Sphere"))
+        {
+            commands.push_back("/gps/pos/radius " + std::to_string(gun.dimX) + " mm");
+        }
+        if (gun.sourceShape == "Cube")
+        {
+            commands.push_back("/gps/pos/halfx " + std::to_string(gun.dimX) + " mm");
+            commands.push_back("/gps/pos/halfy " + std::to_string(gun.dimY) + " mm");
+            commands.push_back("/gps/pos/halfz " + std::to_string(gun.dimZ) + " mm");
+        }
+        if (gun.sourceShape == "Cylinder")
+        {
+            commands.push_back("/gps/pos/radius " + std::to_string(gun.dimX) + " mm");
+            commands.push_back("/gps/pos/halfz " + std::to_string(gun.dimY) + " mm");
+        }
+        if (gun.sourceShape == "Beam")
+        {
+            commands.push_back("/gps/pos/sigma_r " + std::to_string(gun.dimX) + " deg");
+        }
+
+        commands.push_back("/gps/pos/centre " + std::to_string(gun.posX) + " " + std::to_string(gun.posY) + " " + std::to_string(gun.posZ) + " mm");
+
+        // if a angular distribution is given, directions will not be required, therefore this command should preced the ang. dist command so that the ang. dist commands always overrides it
+        if (gun.angularDist == "none")
+            commands.push_back("/gps/direction " + std::to_string(gun.dirx) + " " + std::to_string(gun.diry) + " " + std::to_string(gun.dirz));
+
+        else
+        {
+            // angular distribution
+            if (gun.angularDist == "gauss" || gun.angularDist == "beam1d")
+            {
+                commands.push_back("/gps/ang/sigma_r " + std::to_string(gun.sigma) + " deg");
+            }
+            else
+            {
+                commands.push_back("/gps/ang/type " + gun.angularDist);
+                commands.push_back("/gps/ang/mintheta " + std::to_string(gun.theta_min));
+                commands.push_back("/gps/ang/maxtheta " + std::to_string(gun.theta_max));
+                commands.push_back("/gps/ang/minphi " + std::to_string(gun.phi_min));
+                commands.push_back("/gps/ang/maxphi " + std::to_string(gun.phi_max));
+            }
+        }
+
+        if (gun.espectType == "Monoenergetic")
+        {
+            commands.push_back("/gps/energy " + std::to_string(gun.emin) + " MeV");
+        }
+        else
+        {
+            commands.push_back("/gps/ene/type " + gun.espectType);
+            commands.push_back("/gps/ene/min " + std::to_string(gun.emin) + " MeV");
+            commands.push_back("/gps/ene/max " + std::to_string(gun.emax) + " MeV");
+        }
+
+        if (gun.espectType == "Lin")
+        {
+            commands.push_back("/gps/ene/gradient " + std::to_string(gun.espectParam1));
+            commands.push_back("/gps/ene/intercept " + std::to_string(gun.espectParam2));
+        }
+
+        if (gun.espectType == "Pow")
+        {
+            commands.push_back("/gps/ene/alpha " + std::to_string(gun.espectParam1));
+        }
+
+        if (gun.espectType == "Exp")
+        {
+            commands.push_back("/gps/ene/ezero " + std::to_string(gun.espectParam1));
+        }
+
+        commands.push_back("/gps/polarization " + std::to_string(gun.polx) + " " + std::to_string(gun.poly) + " " + std::to_string(gun.polz));
+
+        commands.push_back("/run/beamOn " + std::to_string(gun.nevents));
+        return commands;
+    }
 
     GunParameters getGun() { return gun; }
     vector<ObjectParameters> getObjects() { return objects; }
     string getPhysicsList() { return json_data["physics"]; }
     string getOutputFile() { return json_data["misc"][0]["outputFile"]; }
-    
 
 private:
     void setGunParameters()
@@ -272,6 +395,8 @@ private:
                 gun.phi_min = json_data["gun"][indx][*it];
             if (*it == "phi_max")
                 gun.phi_max = json_data["gun"][indx][*it];
+            if (*it == "sigma")
+                gun.sigma = json_data["gun"][indx][*it];
             if (*it == "theta_min")
                 gun.theta_min = json_data["gun"][indx][*it];
             if (*it == "theta_max")
