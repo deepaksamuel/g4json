@@ -5,19 +5,6 @@
 using json = nlohmann::json;
 using namespace std;
 
-vector<string> gunKeys = {
-    "dimX", "dimY", "dimZ", "gpsshapePlane", "ionA", "ionZ", "nevents",
-    "particleSource", "particleType", "posX", "posY", "posZ", "showevents",
-    "sourceShape", "angularDist", "dirx", "diry", "dirz", "phi_min", "phi_max", "sigma",
-    "theta_min", "theta_max", "emax", "emin", "espectParam1", "espectParam2",
-    "espectParam3", "espectType", "polx", "poly", "polz"};
-
-vector<string> objectKeys = {
-    "dim-0", "dim-1", "dim-2", "dim-3", "dim-4", "dim-5", "dim-6", "dim-7", "dim-8", "dim-9",
-    "id", "magx", "magy", "magz", "objColor",
-    "objMaterial", "objMaterialFormula", "objMaterialProps", "objName",
-    "objType", "posx", "posy", "posz", "record_data", "rotx", "roty", "rotz"};
-
 struct GunParameters
 {
     // Dimensions
@@ -91,6 +78,18 @@ class g4json
 {
 
 public:
+    vector<string> gunKeys = {
+        "dimX", "dimY", "dimZ", "gpsshapePlane", "ionA", "ionZ", "nevents",
+        "particleSource", "particleType", "posX", "posY", "posZ", "showevents",
+        "sourceShape", "angularDist", "dirx", "diry", "dirz", "phi_min", "phi_max", "sigma",
+        "theta_min", "theta_max", "emax", "emin", "espectParam1", "espectParam2",
+        "espectParam3", "espectType", "polx", "poly", "polz"};
+
+    vector<string> objectKeys = {
+        "dim-0", "dim-1", "dim-2", "dim-3", "dim-4", "dim-5", "dim-6", "dim-7", "dim-8", "dim-9",
+        "id", "magx", "magy", "magz", "objColor",
+        "objMaterial", "objMaterialFormula", "objMaterialProps", "objName",
+        "objType", "posx", "posy", "posz", "record_data", "rotx", "roty", "rotz"};
     GunParameters gun;
     vector<ObjectParameters> objects;
 
@@ -487,7 +486,7 @@ private:
                     object.posz = (json_data["objects"][indx][*it]);
 
                 if (*it == "record_data")
-                    object.record_data = json_data["objects"][indx][*it] == "true";
+                    object.record_data = json_data["objects"][indx][*it];
                 if (*it == "rotx")
                     object.rotx = (json_data["objects"][indx][*it]);
                 if (*it == "roty")
